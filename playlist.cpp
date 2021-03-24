@@ -1,105 +1,229 @@
-#include "playlist.h"
-#include "linkedlist.h"
-#include "music.h"
+#include "playlist.hpp"
+#include "lista.hpp"
+#include "musica.hpp"
 #include <iostream>
 #include <string>
-#include <stdlib.h>
 
 using namespace std;
 
 //Construtor
 Playlist::Playlist(){
-	playlist = new string;
-	playing = NULL;
-	head = NULL;
-	tail = NULL;
+	playing = nullptr;
+	head = nullptr;
+	tail = nullptr;
 }
 
 //Construtor cópia (v0.2)
 Playlist::Playlist(const Playlist &p){
-	playlist = p.playlist;
+	name = p.name;
 	playing = p.playing;
 	head = p.head;
 	tail = p.tail;
 }
 
-//Insere o nome da playlist
+//Insere o nome na playlist
 void Playlist::setPlaylistName(string nome){
-	playlist = &nome;
+	this->name = nome;
 }
 
-//Acessa o nome da playlist
-string * Playlist::getPlaylistName(){
-	return playlist;
+//Retorna o nome da playlist
+string Playlist::getPlaylistName(){
+	return name;
 }
 
-//Acessa qual é a música que está tocando
+//Retorna a música que está sendo tocada
 Node * Playlist::getPlaying(){
 	return playing;
 }
 
-//Acessa a primeira música da playlist
+//Retorna a primeira música da playlist
 Node * Playlist::getPlaylistHead(){
 	return head;
 }
 
-//Acessa a última música da playlist
+//Retorna a última música da playlist
 Node * Playlist::getPlaylistTail(){
 	return tail;
 }
 
-//Armazena a música que será transferida de uma playlist para outra
-Node * Playlist::storemusic(int &position){
-	Node *temp = new Node;
-	temp = head;
-	for(int i = 1; i < position; i++){
-		temp = temp->next;
-	}
-	return temp;
+//Cria uma nova playlist
+void Playlist::newPlaylist(){
+	string nome;
+
+	system("clear");
+
+	cout << (">>>>>>>>>>>>>>>>>>>>>>>>") << endl;
+	cout << "M U S I C   M A N A G E R" << endl;
+	cout << "<<<<<<<<<<<<<<<<<<<<<<<<<\n" << endl;
+
+	cout << "Nome da playlist: ";
+	cin.ignore();
+	getline(cin, nome);
+
+	setPlaylistName(nome);
 }
 
-//Adiciona uma nova música à playlist
-void Playlist::addMusic(Node *temp){
-	if(head == NULL){
-		head = temp;
-		tail = temp;
-		temp = NULL;
+//Imprime a playlist na tela
+void Playlist::displayPlaylist(){
+	Node *temp = new Node;
+	int i = 1;
+
+	temp = head;
+
+	cout << (">>>>>>>>>>>>>>>>>>>>>>>>") << endl;
+	cout << "M U S I C   M A N A G E R" << endl;
+	cout << "<<<<<<<<<<<<<<<<<<<<<<<<<\n" << endl;
+
+	while(temp != nullptr){
+		cout << i << ". " << temp->musica.getTitle() << ", de " << temp->musica.getArtist() << endl;
+		temp = temp->next;
+		i += 1;
+	}
+}
+
+//Verifica se uma música já está cadastrada na playlist
+bool Playlist::searchPMusic(Music m){
+	Node *temp = new Node;
+
+	if(head == nullptr){
+		return false;
 	}
 	else{
-		tail->next = temp;
-		tail = temp;
-		temp->next = NULL;
+		temp = head;
+		while(temp != nullptr){
+			if((temp->musica.getTitle() == m.getTitle()) && (temp->musica.getArtist() == m.getArtist())){
+				return true;
+			}
+			else{
+				temp = temp->next;
+			}
+		}
+		return false;
 	}
+}
+
+//Adicionando uma música na playlist
+void Playlist::addMusic(List l){
+	Node *temp = new Node;
+	List lista = l;
+	bool repetida = false;
+	int posicao;
+
+	system("clear");
+
+	lista.displayList();
+	cout << "_______________________________________\n" << endl;
+	
+	//Buscando a música que será adicionada
+	cout << "Posição da música que será adicionada: ";
+	cin >> posicao;
+
+	//Até aqui funciona
+	//	cout << "DEBUG" << endl;
+	//	getchar();
+
+	if(posicao == 0){
+		return;
+	}
+	else{
+		temp = lista.storeMusic(posicao);
+	}
+
+	if(temp == nullptr){
+		cout << "_______________________________________\n" << endl;
+		cout << "Nenhuma música cadastrada no sistema ou posição inválida." << endl;
+		return;
+	}
+	else{
+		if(head == nullptr){
+			head = temp;
+			tail = temp;
+			temp = nullptr;
+		}
+		else{
+			//Verificando se a música escolhida já está na playlist
+			repetida = searchPMusic(temp->musica);
+			if(repetida == false){
+				tail->next = temp;
+				tail = temp;			
+			}
+		}
+	}
+
+	
+	//Caso o temp tenha recebido null quando a lista era vazia
+	if(temp == nullptr){
+		temp = tail;
+	}
+
+	cout << "_______________________________________\n" << endl;
+	if((tail == temp) && (repetida == false)){
+		cout << "Música adicionada com sucesso :D" << endl;
+	}
+	else{
+		cout << "Música já cadastrada na playlist :/" << endl;
+	}
+
+	//cout << tail->musica.getTitle() << " é igual a " << temp->musica.getTitle() << "?" << endl;
 }
 
 //Adiciona todas as músicas de uma playlist dada na que está sendo criada (v0.2)
 void Playlist::addMusic(Playlist &p){
 	Node *temp = new Node;
+	Music m;
+	bool repetida = false;
+	
 	temp = p.getPlaylistHead();
 
-	tail->next = temp;
-	while(temp != NULL){
+	if(head == nullptr){
+		head = temp;
 		tail = temp;
 		temp = temp->next;
+		while(temp != nullptr){
+			tail->next = temp;
+			tail = temp;
+			temp = temp->next;
+		}
+	}
+	else{
+		while(temp != nullptr){
+			m = temp->musica;
+			repetida = searchPMusic(m);
+			if(repetida == false){
+				tail->next = temp;
+				tail = temp;
+				temp = temp->next;
+			}
+			else{
+				temp = temp->next;
+			}
+		}
 	}
 }
 
-//Exclui uma música da playlist
-void Playlist::dropMusic(int &position){
-	Node *temp = new Node;
-	temp = head;
-		for(int i = 1; i < position; i++){
-		temp = temp->next;
+//Removendo uma música da playlist
+void Playlist::removeMusic(){
+	int posicao;
+
+	system("clear");
+
+	displayPlaylist();
+	cout << "_______________________________________\n" << endl;
+	cout << "Posição da música que será removida: ";
+	cin >> posicao;
+
+	if(posicao == 0){
+		return;
 	}
-	if(position == 1){
+	else if(posicao == 1){
+		Node *temp = head;
 		head = head->next;
 		delete temp;
 	}
 	else{
 		Node *pre = new Node;
-		Node *curr = new Node;
-		curr = head;
-		for(int i = 1; i < position; i++){
+		Node *curr = head;
+		for(int i = 1; i < posicao; i++){
 			pre = curr;
 			curr = curr->next;
 		}
@@ -108,271 +232,99 @@ void Playlist::dropMusic(int &position){
 }
 
 //Exclui todas as músicas de uma playlist dada na que está sendo criada (v0.2)
-int Playlist::dropMusic(Playlist &p){
-	int i = 0;
-	Node *del = new Node;
-	Node *head = new Node;
+void Playlist::removeMusic(Playlist &p){
 	Node *temp = new Node;
-	Node *pre = new Node
 
-	del = head;
-	while(del != NULL){
-		temp = p.getPlaylistHead();
-		if(temp == del){
-			del = del->next;
-			head = del;
-		}
-		while(temp != NULL){
-			if(temp == del->next){
-				pre = del;
-				del = del->next;
-				pre->next = del->next;
-				i += 1;
-			}
-		}
-		del = del->next;
-	}
-	return i;
-}
-
-//Move músicas dentro da playlist
-void Playlist::moveMusic(Playlist *playlist, int &ini_position, int &end_position){
-	Node *tempMove = new Node;
-	tempMove = head;
-		for(int i = 1; i < ini_position; i++){
-		tempMove = tempMove->next;
-	}
-	playlist->dropMusic(ini_position);
-	Node *pre = new Node;
-	Node *curr = new Node;
-	curr = head;
-	for(int i = 1; i < end_position; i++){
-		pre = curr;
-		curr = curr->next;
-	}
-	pre->next = tempMove;
-	tempMove->next = curr;
-}
-
-//Toca a próxima música
-Node * Playlist::playNext(){
-	playing = head;
-	if (playing->next != NULL){
-		Node *temp = playing;
-		playing = playing->next;
-		return temp;
-	}
-	else{
-		return NULL;
-	}
-}
-
-//Imprime a playlist
-void Playlist::displayPlaylist(){
-	Node *temp = new Node;
-	temp = head;
-	Music mus;
-	string *title, *artist;
-	while(temp != NULL){
-		mus = temp->musica;
-		title = mus.getTitle();
-		artist = mus.getArtist();
-		cout << title << ", de " << artist << "\n";
-		temp = temp->next;
-	}
-}
-
-//Concatena duas playlists (v0.2)
-Playlist Playlist::operator+(Playlist p1, Playlist p2){
-	Playlist pfinal;
-	Node *temp = new Node;
-	Node *duplicate = new Node;
-
-	temp = p1.getPlaylistHead();
-	pfinal->head = temp;
-	if(temp == NULL){
-		cout << p1->playlist << " é uma playlist vazia.\n" << endl;
-	}
-	else{
-		while(temp != NULL){
-			pfinal->tail = temp;
-			temp = temp->next;
-		}
-	}
-
-	duplicate = pfinal.getPlaylistHead();
-	for(temp = p2.getPlaylistHead(); temp != NULL; temp = temp->next){
-		while(duplicate != NULL){
-			if(duplicate == temp){
-				temp = temp->next;
-			}
-			duplicate = duplicate->next;
-		}
-		pfinal->tail = temp;
-	}
-	return pfinal;
-}
-
-//Cria uma cópia de uma playlist dada com a música dada adicionada no final (v0.2)
-Playlist Playlist::operator+(Playlist p, Music m){
-	Node *temp = new Node;
-	temp->musica = m;
-	temp->next = NULL;
-
-	p->tail->next = temp;
-	p->tail = temp;
-
-	return p;
-}
-
-//Aplica a "diferença de conjuntos" para duas playlist (v0.2)
-Playlist Playlist::operator-(Playlist p1, Playlist p2){
-	Playlist pfinal;
-	Node *temp = new Node;
-	Node *duplicate = new Node;
-	Node *drop = new Node;
-	Node *drop_head = new Node
-
-	temp = p1.getPlaylistHead();
-	pfinal->head = temp;
-	while(temp != NULL){
-		pfinal->tail = temp;
-		temp = temp->next;
-	}
-
-	duplicate = pfinal.getPlaylistHead();
-	temp = p2.getPlaylistHead();
-
-	if(duplicate == temp){
-		drop_head = duplicate;
-		duplicate = duplicate->next;
-		delete drop_head;
-	}
-
-	while(duplicate != NULL){
-		while(temp != NULL){
-			if(duplicate->next == temp){
-				drop = duplicate;
-				duplicate = duplicate->next;
-				drop->next = duplicate->next;
-			}
-			temp = temp->next;
-		}
-		duplicate = duplicate->next;
-	}
-	return pfinal;
-}
-
-//Cria uma cópia de uma playlist excluindo a música dada (v0.2)
-Playlist Playlist::operator-(Playlist p, Music m){
-	Node *temp = new Node;
-	Node *drop = new Node;
-	Node *prox = new Node;
 	temp = p.getPlaylistHead();
-	
-	if(temp->musica == &m){
-		drop = temp;
-		temp = temp->next;
-		delete drop;
-	}
+	if(head != nullptr){
+		while(temp != nullptr){
+			if(searchPMusic(temp->musica) == true){
+				if(temp == head){
+					temp = head;
+					head = head->next;
+					delete temp;
+				}
+				else{
+					Node *pre = p.getPlaylistHead();
+					Node *curr = temp;
+					while(pre->next != curr){
+						pre = pre->next;
+					}
+					pre->next = curr->next;
+				}
 
-	while(temp != NULL){
-		prox = temp->next;
-		if(prox->musica == &m){
-			temp->next = prox->next;
+			}
 		}
 	}
-	return p;
+
+
 }
 
-//Remove a última música de uma playlist dada e a retorna para o usuário (v0.2)
-void Playlist::operator>>(Playlist &p, Music &m){
-	Music *mus
-	Node *temp = new Node;
+//Movendo uma música dentro da playlist
+void Playlist::moveMusic(){
+	Node *store = new Node;
+	int pinicial, pfinal;
 
-	temp = p->head;
-	if(temp == NULL){
-		m = NULL;
+	system("clear");
+
+	displayPlaylist();
+	cout << "_______________________________________\n" << endl;
+	cout << "Posição da música que será movida: ";
+	cin >> pinicial;
+	cout << "\nPosição onde a música será inserida: ";
+	cin >> pfinal;
+
+	//Buscando o node que será movido
+	Node *temp = head;
+	Node *pre = new Node;
+	for(int i = 1; i < pinicial; i++){
+		pre = temp;
+		temp = temp->next;
+	}
+
+	//Armazenando o node antes de movê-lo
+	store->musica = temp->musica;
+	store->next = nullptr;
+
+	//Excluindo o node da posição antiga
+	pre->next = temp->next;
+
+	//Inserindo o node na nova posição
+	temp = head;
+	for(int i = 1; i < pfinal; i++){
+		pre = temp;
+		temp = temp->next;
+	}
+	pre->next = store;
+	store->next = temp;
+}
+
+//Retornando a próxima música
+Node * Playlist::playNext(){
+	if(playing == nullptr){
+		playing = head;
+		return playing;
 	}
 	else{
-		while(temp->next != p->tail){
+		if (playing->next != nullptr){
+			playing = playing->next;
+			return playing;
+		}
+		else{
+			return nullptr;
+		}
+	}
+}
+
+//Destrutor
+Playlist::~Playlist(){
+	Node *temp = new Node;
+
+	if(head != nullptr){
+		temp = head;
+		while(temp != nullptr){
+			delete temp;
 			temp = temp->next;
 		}
-	
-		mus = p->tail->musica;
-	
-		p->tail = temp;
-		p->tail->next = NULL;
-
-		m = mus;
 	}
-	return m;
-}
-
-//Insere uma música dada no fim de uma playlist (v0.2)
-void Playlist::operator<<(Playlist &p, Music m){
-	Node *temp = new Node;
-
-	if(m == NULL){
-		return p;
-	}
-	else{
-		temp = p->tail->next;
-		temp->musica = &m;
-		temp->next = NULL;
-		p->tail = temp;
-	}
-}
-
-//Destrutor	
-Playlist::~Playlist(){
-	//delete playlist;
-}
-
-//Cria uma nova playlist
-Playlist newPlaylist(){
-	string nome;
-
-	cout << "Nome da playlist: ";
-	cin.ignore();
-	getline(cin, nome);
-
-	Playlist nova_playlist;
-	nova_playlist.setPlaylistName(nome);
-	return nova_playlist;
-}
-
-//Adiciona uma música na playlist
-void insertPlaylist(Playlist *p, List *l){
-	int posicao = 1;
-	Node *transferencia; //armazena a música que será transferida da lista geral pra playlist
-
-	l->displayList();
-	cout << "\nDigite a posição da música que você quer adicionar: ";
-	cin >> posicao;
-	transferencia = l->storeMusic(posicao);
-	p->addMusic(transferencia);
-}
-
-//Exclui uma música da playlist
-void removePlaylist(Playlist *p){
-	int posicao = 1;
-
-	p->displayPlaylist();
-	cout << "\nDigite a posição da música que você quer remover: ";
-	cin >> posicao;
-	p->dropMusic(posicao);
-}
-
-//Move músicas dentro da playlist
-void movePlaylist(Playlist *p){
-	int posicao_inicial, posicao_final;
-
-	p->displayPlaylist();
-	cout << "\nDigite a posição da música que você quer mover: ";
-	cin >> posicao_inicial;
-	cout << "\nDigite a posição para a qual você quer mover a música: ";
-	cin >> posicao_final;
-
-	p->moveMusic(p, posicao_inicial, posicao_final);
 }

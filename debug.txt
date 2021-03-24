@@ -1,0 +1,9 @@
+Módulos de músicas estão funcionando 100%
+
+Adicionar músicas numa playlist só funciona da primeira vez
+
+Remover e listar playlists está funcionando perfeitamente
+
+
+g++ -o main -Wall -ansi -pedantic -O0 -std=c++11 -g main.cpp telas.cpp musica.cpp lista.cpp playlist.cpp plista.cpp
+
